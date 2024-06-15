@@ -1,0 +1,97 @@
+-- ### Exercise 1: Employee Management System
+
+-- **Objective**: To test the ability to design relational databases, write complex
+-- SQL queries, and handle data relationships.
+
+-- #### Requirements:
+
+-- 1. **Database Schema Design**:
+-- - Create tables for `employees`, `departments`, and `salaries`.
+-- - `employees` table should include: `employee_id`, `first_name`, `last_name`,
+-- `department_id`, `hire_date`.
+-- - `departments` table should include: `department_id`, `department_name`.
+-- - `salaries` table should include: `employee_id`, `salary`, `from_date`,
+-- `to_date`.
+
+-- 2. **SQL Queries**:
+-- - Write a query to find all employees who have been hired in the last year.
+-- - Write a query to calculate the total salary expenditure for each department.
+-- - Write a query to find the top 5 highest-paid employees along with their
+-- department names.
+
+-- 1. Database Schema Design
+
+-- Create departments table
+CREATE TABLE departments (
+    department_id SERIAL PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL
+);
+
+-- Create employees table
+CREATE TABLE employees (
+    employee_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    department_id INT REFERENCES departments(department_id),
+    hire_date DATE NOT NULL
+);
+
+-- Create salaries table
+CREATE TABLE salaries (
+    employee_id INT REFERENCES employees(employee_id),
+    salary DECIMAL(10, 2) NOT NULL,
+    from_date DATE NOT NULL,
+    to_date DATE,
+    PRIMARY KEY (employee_id, from_date)
+);
+
+-- 2. SQL Queries
+
+-- 1. Query to find all employees who have been hired in the last year:
+
+SELECT 
+    employee_id, 
+    first_name, 
+    last_name, 
+    hire_date
+FROM 
+    employees
+WHERE 
+    hire_date >= CURRENT_DATE - INTERVAL '1 year';
+
+-- 2. Query to calculate the total salary expenditure for each department:
+
+Copy code
+SELECT 
+    d.department_id,
+    d.department_name,
+    SUM(s.salary) AS total_salary_expenditure
+FROM 
+    employees e
+JOIN 
+    departments d ON e.department_id = d.department_id
+JOIN 
+    salaries s ON e.employee_id = s.employee_id
+GROUP BY 
+    d.department_id, d.department_name;
+
+-- 3. Query to find the top 5 highest-paid employees along with their department names:
+
+Copy code
+SELECT 
+    e.employee_id, 
+    e.first_name, 
+    e.last_name, 
+    d.department_name, 
+    s.salary
+FROM 
+    employees e
+JOIN 
+    salaries s ON e.employee_id = s.employee_id
+JOIN 
+    departments d ON e.department_id = d.department_id
+WHERE 
+    s.to_date IS NULL OR s.to_date > CURRENT_DATE
+ORDER BY 
+    s.salary DESC
+LIMIT 5;
